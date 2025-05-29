@@ -1,11 +1,11 @@
-import React, { useRef, useState } from "react";
-import emailjs from "@emailjs/browser";
+import React, { useState } from "react";
 
 const ContactForm = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState("");
+
   const handleName = (e) => {
     setName(e.target.value);
   };
@@ -15,33 +15,50 @@ const ContactForm = () => {
   const handleMessage = (e) => {
     setMessage(e.target.value);
   };
-  const form = useRef();
-  const sendEmail = (e) => {
+
+  const sendEmail = async (e) => {
     e.preventDefault();
-    emailjs
-      .sendForm("service_l9w1sha", "template_dh0kc9b", form.current, {
-        publicKey: "fOr5asBYfhJzEYqAE",
-      })
-      .then(
-        () => {
-          setEmail("");
-          setName("");
-          setMessage("");
-          setSuccess("Message Sent Succesfully");
+
+    const formData = {
+      access_key: "e90247b8-b41c-49c6-9086-2ec5d3859e20", // replace with your key
+      name: name,
+      email: email,
+      message: message,
+    };
+
+    try {
+      const response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        (error) => {
-          console.log("FAILED...", error.text);
-        }
-      );
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setEmail("");
+        setName("");
+        setMessage("");
+        setSuccess("Message Sent Successfully");
+      } else {
+        console.log(result);
+        setSuccess("Failed to send message");
+      }
+    } catch (error) {
+      console.log("FAILED...", error);
+      setSuccess("Error sending message");
+    }
   };
 
   return (
     <div>
       <p className="text-cyan">{success}</p>
-      <form ref={form} onSubmit={sendEmail} className="flex flex-col gap-4">
+      <form onSubmit={sendEmail} className="flex flex-col gap-4">
         <input
           type="text"
-          name="from_name"
+          name="name"
           placeholder="Your Name"
           required
           className="h-12 rounded-lg bg-lightBrown px-2"
@@ -50,7 +67,7 @@ const ContactForm = () => {
         />
         <input
           type="email"
-          name="from_email"
+          name="email"
           placeholder="Your Email"
           required
           className="h-12 rounded-lg bg-lightBrown px-2"
@@ -58,13 +75,12 @@ const ContactForm = () => {
           onChange={handleEmail}
         />
         <textarea
-          type="text"
           name="message"
           rows="9"
           cols="50"
           placeholder="Message"
           required
-          className=" rounded-lg bg-lightBrown p-2"
+          className="rounded-lg bg-lightBrown p-2"
           value={message}
           onChange={handleMessage}
         />
